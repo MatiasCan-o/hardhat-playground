@@ -1,19 +1,33 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const {expect} = require("chai");
+const {ethers} = require("hardhat");
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("Mint NFT Contract", function () {
+    let Artwork;
+    let artwork;
+    let owner;
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+    const TOKEN_URI = "EXAMPLE_TOKEN_URI";
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    beforeEach(async function () {
+        Artwork = await ethers.getContractFactory("Artwork");
 
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
+        [owner] = await ethers.getSigners();
+        artwork = await Artwork.deploy();
+    })
 
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
-  });
-});
+    describe("Deployment", function () {
+        it("Should have the correct owner", async function () {
+            expect(await artwork.owner()).to.equal(owner.address);
+        })
+
+        it("Should have the correct balance after minting", async function () {
+            const initialBalance = await artwork.balanceOf(owner.address)
+            expect(initialBalance.toString()).to.equal("0");
+
+            await artwork.mintNFT(owner.address, TOKEN_URI);
+
+            const finalBalance = await artwork.balanceOf(owner.address)
+            expect(finalBalance.toString()).to.equal("1");
+        })
+    })
+})
